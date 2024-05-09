@@ -102,6 +102,26 @@ class MersenneCryptosystem():
             dec_bit = '⊥'
         
         return dec_bit
+    
+    def KeyGen(self) -> tuple[tuple[bitarray], bitarray]:
+        F = generate_random_n_hamming_weight_bitarray(self.n, self.h)
+        G = generate_random_n_hamming_weight_bitarray(self.n, self.h)
+        R = generate_random_n_bitarray(self.n)
+        pk = (R, self.add_bitarray(self.multiply_bitarray(F, R), G))
+        sk = F
+        return (pk, sk)
+
+    def Enc(self, pk: tuple[bitarray], m: bitarray, rm: 'ReedMullerCode') -> tuple[bitarray]:
+        R, T = pk
+        A = generate_random_n_hamming_weight_bitarray(self.n, self.h)
+        B1 = generate_random_n_hamming_weight_bitarray(self.n, self.h)
+        B2 = generate_random_n_hamming_weight_bitarray(self.n, self.h)
+        return (self.add_bitarray(self.multiply_bitarray(A, R), B1), self.add_bitarray(self.multiply_bitarray(A, T), B2) ^ rm.encode(m))
+
+    def Dec(self, sk: bitarray, C: tuple[bitarray], rm: 'ReedMullerCode'):
+        C1, C2 = C
+        F = sk
+        return rm.decode(self.multiply_bitarray(F, C1) ^ C2)
         
 
     

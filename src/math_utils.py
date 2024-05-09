@@ -2,6 +2,7 @@ import random
 from bitarray import bitarray
 from bitarray.util import int2ba
 from typing import Union
+from math import comb
 
 # -------------------- #
 #    PRIMALITY TESTS   #
@@ -126,3 +127,15 @@ def EED(a: int, b: int) -> tuple[int, int, int]:
 def inverse_modulo(element: int, n: int) -> int:
     _, _ ,t = EED(n, element)
     return t % n
+
+# this function is terrible
+def find_reed_muller(k: int) -> tuple[int]:
+    for r in range(1, 20):
+        for m in range(r + 1, r + 20):
+            if k == sum(comb(m, i) for i in range(r + 1)):
+                print(r, m)
+
+def pad_to_n_bits(m: bitarray, n: int) -> bitarray:
+    padding_needed = n - (len(m) % n)
+    padded_m = bitarray([0] * padding_needed) + m
+    return padded_m
