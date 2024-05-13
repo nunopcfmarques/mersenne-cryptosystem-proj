@@ -11,6 +11,23 @@ from typing import Literal
 from math_utils import *
 from reed_muller import *
 
+def enc_to_repetition_code(bits: bitarray, p: int) -> bitarray:
+    repeated_bits = bitarray()
+    for bit in bits:
+        repeated_bits.extend([bit] * p)
+    return repeated_bits
+
+def dec_repetition_code_to_bits(enc_bits: bitarray, p: int) -> bitarray:
+    decoded_bits = bitarray()
+    for i in range(0, len(enc_bits), p):
+        chunk = enc_bits[i:i+p]
+        if chunk.count(True) > p / 2:
+            decoded_bits.append(True)
+        else:
+            decoded_bits.append(False)
+    return decoded_bits
+
+
 class MersenneCryptosystem():
     """
     A class representing a Mersenne Cryptosystem.
@@ -111,17 +128,19 @@ class MersenneCryptosystem():
         sk = F
         return (pk, sk)
 
-    def Enc(self, pk: tuple[bitarray], m: bitarray, rm: 'ReedMullerCode') -> tuple[bitarray]:
+    def Enc(self, pk: tuple[bitarray], m: bitarray, p: int) -> tuple[bitarray]:
         R, T = pk
         A = generate_random_n_hamming_weight_bitarray(self.n, self.h)
         B1 = generate_random_n_hamming_weight_bitarray(self.n, self.h)
         B2 = generate_random_n_hamming_weight_bitarray(self.n, self.h)
-        return (self.add_bitarray(self.multiply_bitarray(A, R), B1), self.add_bitarray(self.multiply_bitarray(A, T), B2) ^ rm.encode(m))
+        repetition_code = enc_to_repetition_code(m, p)
+        return (self.add_bitarray(self.multiply_bitarray(A, R), B1), self.add_bitarray(self.multiply_bitarray(A, T), B2)[-len(repetition_code):] ^ repetition_code)
 
-    def Dec(self, sk: bitarray, C: tuple[bitarray], rm: 'ReedMullerCode'):
+    def Dec(self, sk: bitarray, C: tuple[bitarray], p: int):
         C1, C2 = C
         F = sk
-        return rm.decode(self.multiply_bitarray(F, C1) ^ C2)
+        return dec_repetition_code_to_bits(self.multiply_bitarray(F, C1)[-len(C2):] ^ C2, p)
+    
         
 
     

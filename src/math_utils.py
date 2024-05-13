@@ -1,4 +1,5 @@
 import random
+from random import sample
 from bitarray import bitarray
 from bitarray.util import int2ba
 from typing import Union
@@ -87,9 +88,9 @@ def generate_bit_arrays(n) -> list[bitarray]:
 def generate_random_n_bitarray(n: int) -> bitarray:
     return bitarray([random.choice([False, True]) for _ in range(n)])
 
-def generate_random_n_hamming_weight_bitarray(n:int , h: int) -> bitarray:
-    string = [False] * (n - h) + [True] * h
-    random.shuffle(string)
+def generate_random_n_hamming_weight_bitarray(n: int, h: int) -> bitarray:
+    indices = sample(range(n), h)
+    string = [True if i in indices else False for i in range(n)]
     return bitarray(string)
 
 # ------------------ #
