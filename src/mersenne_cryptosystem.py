@@ -128,18 +128,42 @@ class MersenneCryptosystem():
         sk = F
         return (pk, sk)
 
-    def Enc(self, pk: tuple[bitarray], m: bitarray, p: int) -> tuple[bitarray]:
+    def Enc(self, pk: tuple[bitarray, bitarray], m: bitarray, enc, enc_args: Union[None, dict] = None) -> tuple[bitarray]:
         R, T = pk
         A = generate_random_n_hamming_weight_bitarray(self.n, self.h)
         B1 = generate_random_n_hamming_weight_bitarray(self.n, self.h)
         B2 = generate_random_n_hamming_weight_bitarray(self.n, self.h)
-        repetition_code = enc_to_repetition_code(m, p)
-        return (self.add_bitarray(self.multiply_bitarray(A, R), B1), self.add_bitarray(self.multiply_bitarray(A, T), B2)[-len(repetition_code):] ^ repetition_code)
+        enc_message = enc(m, **enc_args) if enc_args else enc(m)
+        return (self.add_bitarray(self.multiply_bitarray(A, R), B1), self.add_bitarray(self.multiply_bitarray(A, T), B2)[-len(enc_message):] ^ enc_message)
 
-    def Dec(self, sk: bitarray, C: tuple[bitarray], p: int):
+    def Dec(self, sk: bitarray, C: tuple[bitarray, bitarray], dec, dec_args: Union[None, dict] = None):
         C1, C2 = C
         F = sk
-        return dec_repetition_code_to_bits(self.multiply_bitarray(F, C1)[-len(C2):] ^ C2, p)
+        return dec(self.multiply_bitarray(F, C1)[-len(C2):] ^ C2, **dec_args) if dec_args else dec(self.multiply_bitarray(F, C1)[-len(C2):] ^ C2)
+    
+    def Encaps(self, pk: tuple[bitarray, bitarray], enc, enc_args: Union[None, dict] = None) -> tuple[tuple[bitarray], bitarray]:
+        K = generate_random_n_bitarray(self.lamb)
+        random.seed(K.to01())
+        R, T = pk
+        A = bitarray(random.shuffle([False] * (self.n - self.h) + [True] * self.h))
+        B1 = bitarray(random.shuffle([False] * (self.n - self.h) + [True] * self.h))
+        B2 = bitarray(random.shuffle([False] * (self.n - self.h) + [True] * self.h))
+        enc_K = enc(K, **enc_args) if enc_args else enc(K)
+        return ((self.add_bitarray(self.multiply_bitarray(A, R), B1), self.add_bitarray(self.multiply_bitarray(A, T), B2)[-len(enc_K):] ^ enc_K), K)
+    
+    def Decaps(self, pk: bitarray, sk: bitarray, C: tuple[bitarray, bitarray], enc, dec, enc_args: Union[None, dict] = None, dec_args: Union[None, dict] = None):
+        C1, C2 = C
+        F = sk
+        R, T = pk
+        K_prime = dec(self.multiply_bitarray(F, C1)[-len(C2):] ^ C2, **dec_args) if dec_args else dec(self.multiply_bitarray(F, C1)[-len(C2):] ^ C2)
+        random.seed(K_prime.to01())
+        A_prime = bitarray(random.shuffle([False] * (self.n - self.h) + [True] * self.h))
+        B1_prime = bitarray(random.shuffle([False] * (self.n - self.h) + [True] * self.h))
+        B2_prime = bitarray(random.shuffle([False] * (self.n - self.h) + [True] * self.h))
+        enc_K_prime = enc(K_prime, **enc_args) if enc_args else enc(K_prime)
+        C_prime = (self.add_bitarray(self.multiply_bitarray(A_prime, R), B1_prime), self.add_bitarray(self.multiply_bitarray(A_prime, T), B2_prime)[-len(enc_K_prime):] ^ enc_K_prime)
+        return K_prime if C_prime == C else '⊥'
+
     
         
 
