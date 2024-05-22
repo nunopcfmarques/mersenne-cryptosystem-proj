@@ -2,7 +2,7 @@ This repository contains code that implements the cryptosystem detailed in https
 
 The specific implementation can be found in src/mersenne_cryptosystem. To better understand the implementation, it is best if you have the code and paper side by side.
 
-project.ipynb contains a showcase of the implementation
+project.ipynb contains a showcase of the implementation.
 
 I will also leave two links to repositories that I used as reference:
 
